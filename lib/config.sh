@@ -11,6 +11,7 @@ readonly DNSMASQ_RESTART_DROPIN="/etc/systemd/system/dnsmasq.service.d/90-${PROG
 readonly RESOLVED_DROPIN="/etc/systemd/resolved.conf.d/90-local-dns.conf"
 readonly HOSTS_DIR="/etc/hosts.d"
 readonly BLOCKLIST_FILE="${HOSTS_DIR}/stevenblack"
+readonly CUSTOM_FILE="/etc/dnsmasq.d/${PROG}-custom.conf"
 readonly SELFTEST_FILE="${HOSTS_DIR}/00-${PROG}-selftest"
 readonly SELFTEST_NAME="selftest.${PROG}.example.net"
 readonly STAGING_DIR="/etc/${PROG}"
@@ -27,5 +28,6 @@ UPSTREAM_DNS="${UPSTREAM_DNS:-1.1.1.1 8.8.8.8}"
 MIN_DOMAINS=1000
 
 DRY_RUN=0
+CMD_ARGS=()
 LOG_QUERIES=0
 DNS_TOUCHED=0

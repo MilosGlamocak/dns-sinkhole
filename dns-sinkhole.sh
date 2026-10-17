@@ -8,6 +8,7 @@
 #   app -> systemd-resolved (127.0.0.53) -> dnsmasq (127.0.0.1) -> upstream DNS
 #
 # Usage: dns-sinkhole [--dry-run] [--log-queries] <install|update|uninstall|status>
+#        dns-sinkhole <add|remove|search> <domain>   |   dns-sinkhole list
 #
 # This file is only the entry point (argument parsing, sudo, dispatch).
 # The actual logic lives in lib/, one module per topic.
@@ -27,7 +28,7 @@ fi
 
 # Order matters: config and common first, the rest only define functions.
 for module in config common render preflight network blocklist verify \
-              cmd-install cmd-update cmd-uninstall cmd-status usage; do
+              cmd-install cmd-update cmd-uninstall cmd-status cmd-custom usage; do
   [[ -r "${LIB_DIR}/${module}.sh" ]] || {
     printf 'ERROR: missing module %s/%s.sh\n' "$LIB_DIR" "$module" >&2
     exit 1
@@ -43,14 +44,20 @@ main() {
       --dry-run)     DRY_RUN=1 ;;
       --log-queries) LOG_QUERIES=1 ;;
       -h|--help|help) usage; exit 0 ;;
-      install|update|uninstall|status) cmd="$1" ;;
-      *) usage >&2; die "Unknown argument: $1" ;;
+      install|update|uninstall|status|list) cmd="$1" ;;
+      add|remove|search) cmd="$1" ;;
+      *)
+        # Everything after add/remove/search is a domain (or search text).
+        case "$cmd" in
+          add|remove|search) CMD_ARGS+=("$1") ;;
+          *) usage >&2; die "Unknown argument: $1" ;;
+        esac ;;
     esac
     shift
   done
   [[ -n "$cmd" ]] || { usage >&2; exit 2; }
 
-  if [[ "$cmd" != "status" && $EUID -ne 0 ]]; then
+  if [[ "$cmd" != "status" && "$cmd" != "search" && "$cmd" != "list" && $EUID -ne 0 ]]; then
     info "Root privileges required, re-running with sudo"
     exec sudo env "BLOCKLIST_URL=${BLOCKLIST_URL}" "UPSTREAM_DNS=${UPSTREAM_DNS}" \
       bash "$SCRIPT_PATH" "${ORIG_ARGS[@]}"
@@ -61,6 +68,10 @@ main() {
     update)    do_update ;;
     uninstall) do_uninstall ;;
     status)    do_status ;;
+    add)       do_add ;;
+    remove)    do_remove ;;
+    search)    do_search ;;
+    list)      do_list ;;
   esac
 }
 

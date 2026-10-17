@@ -30,6 +30,10 @@ Then, in your browser, turn **DNS over HTTPS off** (Firefox: Settings > Privacy 
 | `update` | Re-downloads the blocklist and reloads dnsmasq. A daily systemd timer does this for you. |
 | `uninstall` | Restores the previous configuration. |
 | `status` | Shows service state, number of blocked domains and a self-test. |
+| `add <domain>...` | Blocks your own domain(s). Survives `update`. |
+| `remove <domain>...` | Unblocks domains you added with `add`. |
+| `search <text>` | Finds domains in your list and in the downloaded blocklist. |
+| `list` | Shows the domains you added. |
 
 Options: `--dry-run` (print actions only), `--log-queries` (log every DNS query to the journal, off by default for privacy).
 
@@ -50,6 +54,7 @@ Example: `UPSTREAM_DNS="9.9.9.9 149.112.112.112" ./dns-sinkhole.sh install`
 |---|---|
 | `/etc/dnsmasq.d/sinkhole.conf` | dnsmasq configuration |
 | `/etc/hosts.d/stevenblack` | Converted blocklist |
+| `/etc/dnsmasq.d/dns-sinkhole-custom.conf` | Your own domains (`add` / `remove`); created on first `add`, kept on uninstall |
 | `/etc/hosts.d/00-dns-sinkhole-selftest` | Self-test entry used for verification |
 | `/etc/systemd/resolved.conf.d/90-local-dns.conf` | Points systemd-resolved at dnsmasq |
 | `/etc/systemd/system/dnsmasq.service.d/90-dns-sinkhole-restart.conf` | Restart dnsmasq if it crashes |
@@ -77,6 +82,7 @@ lib/
   cmd-update.sh        `update`
   cmd-uninstall.sh     `uninstall`
   cmd-status.sh        `status`
+  cmd-custom.sh        `add`, `remove`, `search`, `list`
   usage.sh             help text
 ```
 
@@ -92,14 +98,27 @@ Each module only defines functions; `dns-sinkhole.sh` sources them in a fixed or
 
 ## Adding your own rules
 
-Create any file in `/etc/hosts.d/` with **both** lines per domain, then reload:
+The quick way:
+
+```bash
+dns-sinkhole add example.com        # asks: also block all subdomains? [y/N]
+dns-sinkhole add -s example.com     # --subdomains: block www.example.com etc. too, no question
+dns-sinkhole add -e example.com     # --exact: only that exact name, no question
+dns-sinkhole search example         # [custom] / [blocklist] matches
+dns-sinkhole list                   # your domains and their mode
+dns-sinkhole remove example.com     # unblock (only domains you added)
+```
+
+Default is **exact name only** (answer `N`, or run without a terminal). Browsers usually open `www.example.com`, so for a whole site answer `y` or use `-s`; otherwise `www.` stays reachable. Your domains are stored in `/etc/dnsmasq.d/dns-sinkhole-custom.conf`, separate from the downloaded blocklist, so `update` never overwrites them. `uninstall` leaves that file in place. `add` and `remove` restart dnsmasq (well under a second of DNS downtime) and flush the systemd-resolved cache. Browsers keep their own DNS cache: if a site still behaves as before, restart the browser (Chrome: `chrome://net-internals/#dns` > Clear host cache).
+
+The manual way: create any file in `/etc/hosts.d/` with **both** lines per domain, then reload:
 
 ```bash
 printf '0.0.0.0 example.com\n:: example.com\n' | sudo tee /etc/hosts.d/mine
 sudo systemctl reload dnsmasq
 ```
 
-A hosts entry blocks only the exact name. To block a domain and all its subdomains, add this to a file in `/etc/dnsmasq.d/` instead:
+A hosts entry blocks only the exact name. To block a domain and all its subdomains by hand, add this to a file in `/etc/dnsmasq.d/` instead (and restart dnsmasq):
 
 ```
 address=/example.com/0.0.0.0

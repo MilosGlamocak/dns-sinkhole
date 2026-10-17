@@ -25,6 +25,7 @@ do_uninstall() {
   remove_managed "$BLOCKLIST_FILE"
   remove_managed "$SELFTEST_FILE"
   run rmdir "$HOSTS_DIR" 2>/dev/null || true
+  [[ -e "$CUSTOM_FILE" ]] && info "Kept your own domain list: ${CUSTOM_FILE}"
   run rm -rf "$STAGING_DIR"
   run systemctl daemon-reload
 
