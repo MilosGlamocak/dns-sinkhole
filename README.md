@@ -12,7 +12,7 @@ app -> systemd-resolved (127.0.0.53) -> dnsmasq (127.0.0.1) -+-> blocked?  answe
 ## Quick start
 
 ```bash
-git clone https://github.com/<your-user>/dns-sinkhole.git
+git clone https://github.com/MilosGlamocak/dns-sinkhole.git
 cd dns-sinkhole
 less dns-sinkhole.sh lib/*.sh     # it runs as root, read it first
 ./dns-sinkhole.sh --dry-run install   # shows what would change, changes nothing
@@ -133,8 +133,15 @@ The `dnsmasq` and `bind-utils` packages stay installed.
 
 ## Tested on
 
-Fedora 44 (KDE) <!-- confirm after the from-scratch test on the laptop -->
+Fedora 44 (KDE)
 
 ## License
 
 [MIT-0](LICENSE) (MIT No Attribution): use it, change it, sell it, no attribution required.
+
+
+## P.S.
+
+Built this so I don't need to do everything by hand the next time I need it. 
+This whole project is made with Claude Sonnet 5.5.
+Yes, more AI-generated content on the internet, I'm guilty.

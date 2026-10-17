@@ -35,6 +35,7 @@ render_restart_dropin() {
   printf '%s\n' "[Service]"
   printf '%s\n' "Restart=on-failure"
   printf '%s\n' "RestartSec=2"
+  printf '%s\n' "ExecReload=/bin/kill -HUP \$MAINPID"
 }
 
 render_selftest() {
