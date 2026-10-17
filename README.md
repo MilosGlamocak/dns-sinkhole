@@ -133,7 +133,7 @@ The `dnsmasq` and `bind-utils` packages stay installed.
 
 ## Tested on
 
-Fedora 44 (KDE)
+Fedora 44 (GNOME)
 
 ## License
 
